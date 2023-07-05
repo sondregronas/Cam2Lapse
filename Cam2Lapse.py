@@ -50,8 +50,6 @@ def main() -> None:
     # Set the frequency of image updates
     frequency = FREQUENCY_HOUR * 3600 + FREQUENCY_MIN * 60 + FREQUENCY_SEC
 
-    print(f'Starting Cam2Lapse with frequency {frequency} seconds, RTSP URL: {RTSP_URL}')
-
     # Start the image capture loop
     while True:
         capture_frame()
