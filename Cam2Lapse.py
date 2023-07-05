@@ -29,7 +29,7 @@ def capture_frame() -> None:
         os.makedirs(f'{IMG_FOLDER}/{date}')
 
     # Create the command to take the screenshot
-    if USE_TIMESTAMP:
+    if DRAW_TIMESTAMP:
         text_ffmpeg = timestamp.replace("'", "\:")
         command = f'ffmpeg -i {RTSP_URL} -vframes 1 -vf "drawtext=fontfile={FONT}: text=\'{text_ffmpeg}\': {TEXT_STYLE}" "{filename}"'
     else:
@@ -39,11 +39,14 @@ def capture_frame() -> None:
     os.system(command)
 
     # Copy filename as "latest.jpg"
-    shutil.copy(filename, latest)
+    try:
+        shutil.copy(filename, latest)
+    except FileNotFoundError:
+        print(f'[{timestamp} ERROR] FFmpeg failed to create an image. Ensure your specified stream is working and that FFmpeg is installed.')
 
 
 def main() -> None:
-    # Create the images folder if it doesn't exist
+    # Create the image folder if it doesn't exist
     if not os.path.exists(IMG_FOLDER):
         os.makedirs(IMG_FOLDER)
 

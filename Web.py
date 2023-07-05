@@ -7,6 +7,7 @@ Adjust the config.py file to your liking, then run this script.
 """
 import flask
 from pathlib import Path
+from Cam2Lapse import capture_frame
 from config import *
 
 app = flask.Flask(__name__)
@@ -17,6 +18,8 @@ LATEST = Path(f'{IMG_FOLDER}/latest.jpg')
 @app.route('/')
 def index() -> flask.Response:
     """Return the latest image."""
+    if CAPTURE_ON_REQUEST:
+        capture_frame()
     return flask.send_file(LATEST, mimetype='image/jpeg')
 
 
