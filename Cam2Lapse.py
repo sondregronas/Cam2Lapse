@@ -18,16 +18,24 @@ def capture_frame() -> None:
     """Takes a screenshot of the RTSP stream and saves it to the local filesystem."""
     # Create a timestamped file (in a folder named with today's date)
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    timestamp = datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d")
+    timestamp = datetime.datetime.now().strftime("%H'%M'%S %Y-%m-%d")
 
     # Filepath to save the images to
     filename = Path(f'{IMG_FOLDER}/{date}/{timestamp}.jpg')
     latest = Path(f'{IMG_FOLDER}/latest.jpg')
 
-    # Create the command to take the screenshot
-    command = f"ffmpeg -i {RTSP_URL} -vframes 1 {filename}"
+    # Ensure the folder exists
+    if not os.path.exists(f'{IMG_FOLDER}/{date}'):
+        os.makedirs(f'{IMG_FOLDER}/{date}')
 
-    # Execute the command
+    # Create the command to take the screenshot
+    if USE_TIMESTAMP:
+        text_ffmpeg = timestamp.replace("'", "\:")
+        command = f'ffmpeg -i {RTSP_URL} -vframes 1 -vf "drawtext=fontfile={FONT}: text=\'{text_ffmpeg}\': {TEXT_STYLE}" "{filename}"'
+    else:
+        command = f'ffmpeg -i {RTSP_URL} -vframes 1 "{filename}"'
+
+    # Take the screenshot
     os.system(command)
 
     # Copy filename as "latest.jpg"

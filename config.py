@@ -1,6 +1,11 @@
 # Folder to store images
 IMG_FOLDER = "Cam2Lapse"
 
+# Print timestamp on image (Affects both the latest image and the saved images)
+USE_TIMESTAMP = False
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+TEXT_STYLE = "fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: boxborderw=5: x=10: y=10"
+
 # RTSP URL, which camera to use
 RTSP_URL = "rtsp://<Your RTSP URL here>"
 
