@@ -16,7 +16,7 @@ The configuration is done in the `config.py` file. It's important that you updat
 ## Embedding the latest capture
 The web server will serve the latest capture at the `/` endpoint. You can embed this in a webpage simply by using the following HTML:
 ```html
-<img src="http://<Your-Flask-Server:5000>"/>
+<img src="http://<Web-Server-IP>:5000"/>
 ```
 
 Example:
