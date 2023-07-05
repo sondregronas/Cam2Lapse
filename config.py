@@ -1,3 +1,6 @@
+# RTSP URL, which camera to use
+RTSP_URL = "rtsp://<Your RTSP URL here>"
+
 # Folder to store images
 IMG_FOLDER = "Cam2Lapse"
 
@@ -5,9 +8,6 @@ IMG_FOLDER = "Cam2Lapse"
 USE_TIMESTAMP = False
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 TEXT_STYLE = "fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: boxborderw=5: x=10: y=10"
-
-# RTSP URL, which camera to use
-RTSP_URL = "rtsp://<Your RTSP URL here>"
 
 # Frequency of image updates
 FREQUENCY_HOUR = 0
