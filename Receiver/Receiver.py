@@ -12,6 +12,8 @@ import shutil
 import flask
 from datetime import datetime
 from pathlib import Path
+
+from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -19,7 +21,7 @@ app = flask.Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
 
 
-def save_file(image, name='latest.jpg', directory='1') -> None:
+def save_file(image_bytes, name='latest.jpg', directory='1') -> None:
     """Save the file to the specified directory."""
     if name == '.jpg':
         name = 'latest.jpg'
@@ -38,10 +40,16 @@ def save_file(image, name='latest.jpg', directory='1') -> None:
         os.makedirs(f'img/{directory}/{date}')
 
     # Save the file
-    image.save(Path(f'img/{name}'))
+    image_bytes.save(Path(f'img/{name}'))
 
     # Copy the file to the date dir
     shutil.copy(Path(f'img/{name}'), Path(f'img/{directory}/{date}/{timestamp}.jpg'))
+
+    # Create a webp version of the image at half the resolution
+    new_name = name.replace('.jpg', '.webp')
+    image = Image.open(Path(f'img/{name}'))
+    image = image.resize((int(image.width / 2), int(image.height / 2)), Image.ANTIALIAS)
+    image.save(Path(f'img/{new_name}'), 'webp', quality=80, method=6)
 
 
 @app.route('/', defaults={'path': ''}, methods=['POST'])
