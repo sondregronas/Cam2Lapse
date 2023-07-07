@@ -1,9 +1,11 @@
 """
-Discord bot for monitoring the status of the cam2lapse cameras.
+Discord bot for monitoring the status of the Cam2Lapse cameras.
 
 Temporary solution until I can get a proper monitoring system set up.
 
-In order to stop tracking a camera, the .webp file for that camera must be deleted. This will be fixed in the future.
+Code's a bit messy, will clean it up later.
+
+Could add livefeeds and metadata later, but just wanted to get a notification when a camera goes down for now.
 """
 import asyncio
 import os
@@ -18,7 +20,7 @@ token = os.environ.get('DISCORD_TOKEN')
 warn_when = datetime.timedelta(minutes=30)
 error_when = datetime.timedelta(hours=6)
 # How long to wait between checking for new images
-interval_min = 30
+interval_min = 60
 
 # Create the Discord client
 intents = discord.Intents.default()
@@ -42,15 +44,43 @@ def save_channel_ids() -> None:
         f.write('\n'.join(converted) + '\n')
 
 
+def load_blacklist() -> list:
+    """Load the blacklist from the file."""
+    if not os.path.exists('blacklist.txt'):
+        return []
+
+    with open('blacklist.txt', 'r') as f:
+        return [feed for feed in f.read().split('\n') if feed]
+
+
+def save_blacklist() -> None:
+    """Save the blacklist to the file."""
+    with open('blacklist.txt', 'w+') as f:
+        converted = [str(feed) for feed in blacklist]
+        f.write('\n'.join(converted) + '\n')
+
+
 channel_ids = load_channel_ids()
+blacklist = load_blacklist()
 status = {}
 
 
 class Cam2LapseBot(discord.Client):
+    async def update_status(self) -> None:
+        """Update the status of the bot."""
+        statustext = f'{len(status)} feeds'
+        if len(status) == 1:
+            statustext = f'{len(status)} feed'
+        if len(blacklist) > 0:
+            statustext += f' ({len(blacklist)} ignored)'
+        await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=statustext))
+
     async def check_images(self):
         """Check the root directory for last modified date of .webp images."""
         for file in Path('img').glob('*.webp'):
-            # Add file to status if it doesn't exist
+            if file.name in blacklist:
+                continue
+
             if file.name not in status:
                 status[file.name] = 0
 
@@ -63,6 +93,8 @@ class Cam2LapseBot(discord.Client):
                 await self.send_warning(file.name.split('.webp')[0])
             else:
                 status[file.name] = 0
+
+        await self.update_status()
 
     async def send_warning(self, camera_name: str):
         """Send a warning to all connected channels."""
@@ -87,15 +119,64 @@ class Cam2LapseBot(discord.Client):
         if message.author == self.user:
             return
 
-        if message.content.startswith('!c2l-add'):
-            channel_ids.append(message.channel.id)
-            save_channel_ids()
-            await message.channel.send(f'Roger that, {message.author.name}! I\'ll send warnings here.')
+        match message.content.split():
+            case ['!c2l-add']:
+                if message.channel.id in channel_ids:
+                    await message.channel.send(f'I\'m already sending warnings here, {message.author.mention}!')
+                    return
+                channel_ids.append(message.channel.id)
+                save_channel_ids()
+                await message.channel.send(f'Roger that, {message.author.mention}! I\'ll send warnings in {message.channel.mention}.')
 
-        if message.content.startswith('!c2l-remove'):
-            channel_ids.remove(message.channel.id)
-            save_channel_ids()
-            await message.channel.send(f'No problem, {message.author.name}. I\'ll stop sending warnings here.')
+            case ['!c2l-remove']:
+                if message.channel.id not in channel_ids:
+                    await message.channel.send(f'I wasn\'t sending warnings in {message.channel.mention} to begin with, {message.author.mention}!')
+                    return
+                channel_ids.remove(message.channel.id)
+                save_channel_ids()
+                await message.channel.send(f'No problem, {message.author.mention}. I\'ll stop sending warnings in {message.channel.mention}.')
+
+            case ['!c2l-list']:
+                if len(status) == 0:
+                    text = '**I\'m not watching any feeds right now.**\n'
+                else:
+                    text = 'Here are the feeds I\'m watching:\n> ' + '\n> '.join([feed.split('.webp')[0] for feed in status])
+
+                if len(blacklist) == 0:
+                    text += '\n\n**I\'m not ignoring any feeds right now.**\n'
+                else:
+                    text += '\n\nAnd here are the feeds I\'m ignoring:\n> ' + '\n> '.join([feed.split('.webp')[0] for feed in blacklist])
+
+                text += '\n_Use `!c2l-toggle <camera>` to toggle a camera feed._'
+
+                await message.channel.send(text)
+
+            case ['!c2l-toggle', feed]:
+                if not feed.endswith('.webp'):
+                    feed = feed + '.webp'
+                if feed not in status and feed not in blacklist:
+                    await message.channel.send(f'Sorry, but I don\'t recognize that feed, {message.author.mention}!')
+                    return
+                if feed in blacklist:
+                    blacklist.remove(feed)
+                    status[feed] = 0
+                    save_blacklist()
+                    await message.channel.send(f'Roger that, {message.author.mention}! I\'ll monitor the feed.')
+                else:
+                    blacklist.append(feed)
+                    if feed in status:
+                        status.pop(feed)
+                    save_blacklist()
+                    await message.channel.send(f'No problem, {message.author.mention}. I\'ll stop monitoring the feed.')
+                await self.update_status()
+
+            case ['!c2l' | '!c2l-help' | '!c2l-commands']:
+                await message.channel.send(f'Here are the commands I respond to:\n'
+                                           f'`!c2l-add` - Add this channel to the list of channels to send warnings to.\n'
+                                           f'`!c2l-remove` - Remove this channel from the list of channels to send warnings to.\n'
+                                           f'`!c2l-list` - List all camera feeds I\'m watching or ignoring.\n'
+                                           f'`!c2l-toggle <camera feed>` - Toggle warnings for a specific camera feed.\n'
+                                           f'`!c2l` | `!c2l-help` | `!c2l-commands` - Show this message.')
 
     async def on_ready(self):
         print(f'{self.user} has connected to Discord!')

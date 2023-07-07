@@ -1,5 +1,5 @@
 # Map /app/img to the root folder of the receiver (where .webp files are stored)
-FROM python:3.8
+FROM python:3.10
 ENV DISCORD_TOKEN=""
 RUN mkdir /app
 WORKDIR /app
