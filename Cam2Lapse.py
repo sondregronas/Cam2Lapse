@@ -36,7 +36,10 @@ def capture_frame() -> None:
         command = f'ffmpeg -i {RTSP_URL} -vframes 1 "{filename}"'
 
     # Take the screenshot
-    os.system(command)
+    while os.system(command) != 0:
+        print(f"[{timestamp}] Failed to save image! (Retrying in 5s...)")
+        time.sleep(5)
+    print(f"[{timestamp}] Saved!")
 
     # Copy filename as "latest.jpg"
     try:
@@ -52,11 +55,16 @@ def main() -> None:
 
     # Set the frequency of image updates
     frequency = FREQUENCY_HOUR * 3600 + FREQUENCY_MIN * 60 + FREQUENCY_SEC
-
+    
+    start = time.time()
+    capture_frame()
+    
     # Start the image capture loop
     while True:
-        capture_frame()
-        time.sleep(frequency)
+        time.sleep(10)
+        if time.time() - start >= frequency:
+            start = time.time()
+            capture_frame()
 
 
 if __name__ == "__main__":
