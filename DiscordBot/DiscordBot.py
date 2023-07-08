@@ -107,9 +107,9 @@ class Cam2LapseBot(discord.Client):
                 continue
             time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
             if time_elapsed.seconds < 120:
-                last_seen[file.name] = 'just now'
+                last_seen[file.name] = 'pushed just now'
             else:
-                last_seen[file.name] = f'{time_elapsed.seconds // 60} minutes ago'
+                last_seen[file.name] = f'pushed {time_elapsed.seconds // 60} minutes ago'
         return last_seen
 
 
