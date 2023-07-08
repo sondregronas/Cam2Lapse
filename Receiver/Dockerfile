@@ -6,6 +6,7 @@ FROM python:3.7
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Oslo
+ENV TOKEN=""
 RUN apt-get update && apt-get install -y tzdata
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
