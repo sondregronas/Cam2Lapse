@@ -79,6 +79,8 @@ class Cam2LapseBot(discord.Client):
         """Check the root directory for last modified date of .webp images."""
         for file in Path('img').glob('*.webp'):
             if file.name in blacklist:
+                if file.name in status:
+                    del status[file.name]
                 continue
 
             if file.name not in status:
@@ -95,6 +97,21 @@ class Cam2LapseBot(discord.Client):
                 status[file.name] = 0
 
         await self.update_status()
+
+
+    async def get_status(self):
+        """Returns a dictionary of camera names and their 'last modified' time."""
+        last_seen = {}
+        for file in Path('img').glob('*.webp'):
+            if file.name in blacklist:
+                continue
+            time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
+            if time_elapsed.seconds < 120:
+                last_seen[file.name] = 'just now'
+            else:
+                last_seen[file.name] = f'{time_elapsed.seconds // 60} minutes ago'
+        return last_seen
+
 
     async def send_warning(self, camera_name: str):
         """Send a warning to all connected channels."""
@@ -137,15 +154,21 @@ class Cam2LapseBot(discord.Client):
                 await message.channel.send(f'No problem, {message.author.mention}. I\'ll stop sending warnings in {message.channel.mention}.')
 
             case ['!c2l-list']:
+                last_seen = await self.get_status()
+
                 if len(status) == 0:
                     text = '**I\'m not watching any feeds right now.**\n'
                 else:
-                    text = 'Here are the feeds I\'m watching:\n> ' + '\n> '.join([feed.split('.webp')[0] for feed in status])
+                    text = 'Here are the feeds I\'m watching:\n'
+                    for feed in status:
+                        text += f'* {feed.split(".webp")[0]} - _({last_seen[feed]})_\n'
 
                 if len(blacklist) == 0:
-                    text += '\n\n**I\'m not ignoring any feeds right now.**\n'
+                    text += '\n**I\'m not ignoring any feeds right now.**\n'
                 else:
-                    text += '\n\nAnd here are the feeds I\'m ignoring:\n> ' + '\n> '.join([feed.split('.webp')[0] for feed in blacklist])
+                    text += '\nAnd here are the feeds I\'m ignoring:\n '
+                    for feed in blacklist:
+                        text += f'* {feed.split(".webp")[0]}\n'
 
                 text += '\n_Use `!c2l-toggle <camera>` to toggle a camera feed._'
 
