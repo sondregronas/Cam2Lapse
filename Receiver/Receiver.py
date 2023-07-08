@@ -16,6 +16,7 @@ from pathlib import Path
 from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+TOKEN = os.environ.get('TOKEN')
 
 app = flask.Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
@@ -56,7 +57,9 @@ def save_file(image_bytes, name='latest.jpg', directory='1') -> None:
 @app.route('/<path:path>', methods=['POST'])
 def index(path) -> flask.Response:
     """Save the image to the local filesystem."""
-    # TODO: Add authentication here
+    token = flask.request.args.get('token')
+    if not token == TOKEN:
+        return flask.Response(status=401)
 
     if not os.path.exists('img'):
         os.makedirs('img')
