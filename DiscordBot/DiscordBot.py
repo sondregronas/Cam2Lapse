@@ -1,11 +1,12 @@
 """
 Discord bot for monitoring the status of the Cam2Lapse cameras.
 
-Temporary solution until I can get a proper monitoring system set up.
+Code's a bit messy, will clean it up later. Not really ready for public use yet.
 
-Code's a bit messy, will clean it up later.
-
-Could add livefeeds and metadata later, but just wanted to get a notification when a camera goes down for now.
+Required scopes:
+- send messages
+- slash commands
+- mention everyone
 """
 import asyncio
 import os
@@ -24,8 +25,6 @@ interval_min = 60
 
 # Create the Discord client
 intents = discord.Intents.default()
-intents.messages = True
-intents.message_content = True
 
 
 def load_channel_ids() -> list:
@@ -98,7 +97,6 @@ class Cam2LapseBot(discord.Client):
 
         await self.update_status()
 
-
     async def get_status(self):
         """Returns a dictionary of camera names and their 'last modified' time."""
         last_seen = {}
@@ -112,14 +110,13 @@ class Cam2LapseBot(discord.Client):
                 last_seen[file.name] = f'pushed {time_elapsed.seconds // 60} minutes ago'
         return last_seen
 
-
     async def send_warning(self, camera_name: str):
         """Send a warning to all connected channels."""
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = f'Warning: Camera feed "{camera_name}" has not sent an update in a while.'
             text = f'This is warning #{status[camera_name]}.'
-            embed = discord.Embed(title=title, description=text, color=0xff0000)
+            embed = discord.Embed(title=title, description=text, color=0xffa000)
             await channel.send(embed=embed)
             await channel.send(f'>  [{status[camera_name]} warnings]')
 
@@ -132,81 +129,72 @@ class Cam2LapseBot(discord.Client):
             embed = discord.Embed(title=title, description=text, color=0xff0000)
             await channel.send(embed=embed)
 
-    async def on_message(self, message: discord.Message):
-        if message.author == self.user:
-            return
-
-        match message.content.split():
-            case ['!c2l-add']:
-                if message.channel.id in channel_ids:
-                    await message.channel.send(f'I\'m already sending warnings here, {message.author.mention}!')
-                    return
-                channel_ids.append(message.channel.id)
-                save_channel_ids()
-                await message.channel.send(f'Roger that, {message.author.mention}! I\'ll send warnings in {message.channel.mention}.')
-
-            case ['!c2l-remove']:
-                if message.channel.id not in channel_ids:
-                    await message.channel.send(f'I wasn\'t sending warnings in {message.channel.mention} to begin with, {message.author.mention}!')
-                    return
-                channel_ids.remove(message.channel.id)
-                save_channel_ids()
-                await message.channel.send(f'No problem, {message.author.mention}. I\'ll stop sending warnings in {message.channel.mention}.')
-
-            case ['!c2l-list']:
-                last_seen = await self.get_status()
-
-                if len(status) == 0:
-                    text = '**I\'m not watching any feeds right now.**\n'
-                else:
-                    text = 'Here are the feeds I\'m watching:\n'
-                    for feed in status:
-                        text += f'* {feed.split(".webp")[0]} - _({last_seen[feed]})_\n'
-
-                if len(blacklist) == 0:
-                    text += '\n**I\'m not ignoring any feeds right now.**\n'
-                else:
-                    text += '\nAnd here are the feeds I\'m ignoring:\n '
-                    for feed in blacklist:
-                        text += f'* {feed.split(".webp")[0]}\n'
-
-                text += '\n_Use `!c2l-toggle <camera>` to toggle a camera feed._'
-
-                await message.channel.send(text)
-
-            case ['!c2l-toggle', feed]:
-                if not feed.endswith('.webp'):
-                    feed = feed + '.webp'
-                if feed not in status and feed not in blacklist:
-                    await message.channel.send(f'Sorry, but I don\'t recognize that feed, {message.author.mention}!')
-                    return
-                if feed in blacklist:
-                    blacklist.remove(feed)
-                    status[feed] = 0
-                    save_blacklist()
-                    await message.channel.send(f'Roger that, {message.author.mention}! I\'ll monitor the feed.')
-                else:
-                    blacklist.append(feed)
-                    if feed in status:
-                        status.pop(feed)
-                    save_blacklist()
-                    await message.channel.send(f'No problem, {message.author.mention}. I\'ll stop monitoring the feed.')
-                await self.update_status()
-
-            case ['!c2l' | '!c2l-help' | '!c2l-commands']:
-                await message.channel.send(f'Here are the commands I respond to:\n'
-                                           f'`!c2l-add` - Add this channel to the list of channels to send warnings to.\n'
-                                           f'`!c2l-remove` - Remove this channel from the list of channels to send warnings to.\n'
-                                           f'`!c2l-list` - List all camera feeds I\'m watching or ignoring.\n'
-                                           f'`!c2l-toggle <camera feed>` - Toggle warnings for a specific camera feed.\n'
-                                           f'`!c2l` | `!c2l-help` | `!c2l-commands` - Show this message.')
-
-    async def on_ready(self):
-        print(f'{self.user} has connected to Discord!')
-        while True:
-            await self.check_images()
-            await asyncio.sleep(interval_min * 60)
-
 
 client = Cam2LapseBot(intents=intents)
+tree = discord.app_commands.CommandTree(client)
+
+
+@client.event
+async def on_ready():
+    print(f'Logged in as {client.user.name} ({client.user.id})')
+    await tree.sync()
+    while True:
+        await client.check_images()
+        await client.update_status()
+        await asyncio.sleep(interval_min * 60)
+
+
+@tree.command(name='ping')
+async def _ping(interaction):
+    """Replies with 'Pong!'"""
+    await interaction.response.send_message('Pong!')
+
+
+@tree.command(name='channel')
+async def _channel(interaction):
+    """Set or remove the current channel from error notifications"""
+    if interaction.channel_id in channel_ids:
+        channel_ids.remove(interaction.channel_id)
+        embed = discord.Embed(title='Channel status', description=f'<#{interaction.channel_id}> removed', color=0xffa000)
+        await interaction.response.send_message(embed=embed)
+    else:
+        channel_ids.append(interaction.channel_id)
+        embed = discord.Embed(title='Channel status', description=f'<#{interaction.channel_id}> added', color=0x00ff00)
+        await interaction.response.send_message(embed=embed)
+    save_channel_ids()
+
+
+@tree.command(name='status')
+async def _status(interaction):
+    """Get the current status of all feeds"""
+    last_seen = await client.get_status()
+    embed = discord.Embed(title='Camera feed status', color=0x00ff00)
+    for camera_name, last_seen_text in last_seen.items():
+        if camera_name.split('.webp')[0] in blacklist:
+            embed.add_field(name=f'~~{camera_name.split(".webp")[0]}~~', value=f'~~{last_seen_text}~~ **(blacklisted)**', inline=False)
+            continue
+        embed.add_field(name=camera_name.split('.webp')[0], value=last_seen_text, inline=False)
+    if len(blacklist):
+        embed.add_field(value='NOTE: *blacklisted cameras are not monitored*', name='')
+    embed.add_field(value='Use `/toggle <feed>` to toggle monitoring for a feed', name='')
+    await interaction.response.send_message(embed=embed)
+
+
+@tree.command(name='toggle')
+async def _toggle(interaction, camera_name: str):
+    """Toggle monitoring on or off for the given camera"""
+    if camera_name in blacklist:
+        blacklist.remove(camera_name)
+        embed = discord.Embed(title='Camera feed status', color=0x00ff00)
+        embed.add_field(name=camera_name, value='Monitoring', inline=False)
+        await interaction.response.send_message(embed=embed)
+    else:
+        blacklist.append(camera_name)
+        embed = discord.Embed(title='Camera feed status', color=0xffa000)
+        embed.add_field(name=camera_name, value='Ignoring', inline=False)
+        await interaction.response.send_message(embed=embed)
+    save_blacklist()
+    await client.update_status()
+
+
 client.run(token)
