@@ -1,4 +1,6 @@
-# Cam2Lapse
+# Cam2Lapse off-site RTSP to "live"stream / timelapse storage (WIP)
+### NOTE: This project is not ready for public use, and will probably not meet your needs as-is.
+
 A simple python script to capture timelapse images from an RTSP stream. Plus a webserver, in order to embed the latest capture in a webpage.
 
 There's a couple of docker containers in folders for temporary use that currently don't work with the script as-is, will work on implementing this properly later (maybe).
