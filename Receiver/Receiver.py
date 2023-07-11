@@ -53,7 +53,7 @@ def save_file(image_bytes, name='latest.jpg', directory='1') -> None:
     image.save(Path(f'img/{new_name}'), 'webp', quality=80, method=6)
 
     # Update index.html
-    html = f'<img class="cam2lapse" src="{new_name}" alt="Timelapse"/>'
+    html = f'<a href="{new_name}"><img class="cam2lapse" src="{new_name}" alt="Timelapse"/></a>'
     if html in open(Path('img/index.html')).read():
         return
     with open(Path('img/index.html'), 'r+') as f:
@@ -96,9 +96,9 @@ if __name__ == '__main__':
 <div class="timelapse-container">
 </div>
 <br><hr><br>
-<p>To embed a timelapse, add the following HTML to your page:</p>
+<p>To embed a livefeed, use the following HTML:</p>
 <xmp><img class="cam2lapse" src="<link-to-image>" alt="Timelapse"/></xmp>
-<p>For live updates, add the following script tag to your page:</p>
+<p>For live updates on embedded pictures you need to add the following snippet:</p>
 <xmp><script>
   let timelapse_class = "cam2lapse";
   setInterval(() => {
