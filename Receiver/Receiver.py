@@ -13,7 +13,7 @@ import flask
 from datetime import datetime
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 TOKEN = os.environ.get('TOKEN')
@@ -48,7 +48,10 @@ def save_file(image_bytes, name='latest.jpg', directory='1') -> None:
 
     # Create a webp version of the image at half the resolution
     new_name = name.replace('.jpg', '.webp')
-    image = Image.open(Path(f'img/{name}'))
+    try:
+        image = Image.open(Path(f'img/{name}'))
+    except UnidentifiedImageError:
+        raise UnidentifiedImageError(f'Could not open image {name}')
     image = image.resize((int(image.width / 2), int(image.height / 2)), Image.ANTIALIAS)
     image.save(Path(f'img/{new_name}'), 'webp', quality=80, method=6)
 
@@ -77,7 +80,10 @@ def index(path) -> flask.Response:
     if not os.path.exists('img'):
         os.makedirs('img')
 
-    save_file(flask.request.files['file'], f'{path}.jpg', path)
+    try:
+        save_file(flask.request.files['file'], f'{path}.jpg', path)
+    except UnidentifiedImageError:
+        return flask.Response(status=400)
 
     return flask.Response(status=200)
 
