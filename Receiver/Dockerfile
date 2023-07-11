@@ -19,7 +19,6 @@ RUN pip install Pillow
 RUN mkdir /app/img
 
 VOLUME /app/img
-RUN echo '<html><head><meta http-equiv="Refresh" content="0; url="latest.webp" /></head><body></body></html>' > /app/img/index.html
 EXPOSE 5000
 
 CMD ["python", "Receiver.py"]
