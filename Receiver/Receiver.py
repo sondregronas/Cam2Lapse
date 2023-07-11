@@ -52,6 +52,19 @@ def save_file(image_bytes, name='latest.jpg', directory='1') -> None:
     image = image.resize((int(image.width / 2), int(image.height / 2)), Image.ANTIALIAS)
     image.save(Path(f'img/{new_name}'), 'webp', quality=80, method=6)
 
+    # Update index.html
+    html = f'<img class="cam2lapse" src="{new_name}" alt="Timelapse"/>'
+    if html in open(Path('img/index.html')).read():
+        return
+    with open(Path('img/index.html'), 'r+') as f:
+        lines = f.readlines()
+        for i, line in enumerate(lines):
+            if '<div class="timelapse-container">' in line:
+                lines.insert(i + 1, html)
+                break
+        f.seek(0)
+        f.writelines(lines)
+
 
 @app.route('/', defaults={'path': ''}, methods=['POST'])
 @app.route('/<path:path>', methods=['POST'])
@@ -70,4 +83,35 @@ def index(path) -> flask.Response:
 
 
 if __name__ == '__main__':
+    if not os.path.exists('img'):
+        os.makedirs('img')
+    if not os.path.exists('img/index.html'):
+        with open(Path('img/index.html'), 'w+') as f:
+            f.write("""<!DOCTYPE html>
+<html><head><title>Cam2Lapse</title><link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css"/>
+<style>xmp{background-color:#0e0e0e;text-align:left;padding:5px;}</style></head>
+<body>
+<main>
+<center>
+<div class="timelapse-container">
+</div>
+<br><hr><br>
+<p>To embed a timelapse, add the following HTML to your page:</p>
+<xmp><img class="cam2lapse" src="<link-to-image>" alt="Timelapse"/></xmp>
+<p>For live updates, add the following script tag to your page:</p>
+<xmp><script>
+  let timelapse_class = "cam2lapse";
+  setInterval(() => {
+    for (let element of document.getElementsByClassName(timelapse_class)) {
+      element.src = `${element.src.split("?")[0]}?${new Date().getTime()}`
+    }
+  }, 30000); // 30s
+</script>
+</xmp>
+<script>let timelapse_class = "cam2lapse";setInterval(() => {for (let element of document.getElementsByClassName(timelapse_class)) {element.src = `${element.src.split("?")[0]}?${new Date().getTime()}`}}, 30000);</script>
+</center>
+</main>
+</body>
+</html>""")
+
     app.run(host='0.0.0.0', port=5000)
