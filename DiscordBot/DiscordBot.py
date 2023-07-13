@@ -177,6 +177,10 @@ async def _status(interaction):
     if len(blacklist):
         embed.add_field(value='NOTE: *blacklisted cameras are not monitored*', name='')
     embed.add_field(value='Use `/toggle <feed>` to toggle monitoring for a feed', name='')
+    embed.add_field(name='Subscribed channels', value=f'', inline=False)
+    for channel in channel_ids:
+        if interaction.guild.get_channel(channel):
+            embed.add_field(name='', value=f'<#{channel}>', inline=False)
     await interaction.response.send_message(embed=embed)
 
 
