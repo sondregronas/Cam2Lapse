@@ -8,11 +8,11 @@ Required scopes:
 - slash commands
 - mention everyone
 """
-import asyncio
 import os
 import datetime
 import discord
 from pathlib import Path
+from discord.ext import tasks
 
 # Load the Discord token from the environment
 token = os.environ.get('DISCORD_TOKEN')
@@ -129,6 +129,10 @@ class Cam2LapseBot(discord.Client):
             embed = discord.Embed(title=title, description=text, color=0xff0000)
             await channel.send(embed=embed)
 
+    @tasks.loop(seconds=interval_min * 60)
+    async def _loop(self):
+        await self.check_images()
+
 
 client = Cam2LapseBot(intents=intents)
 tree = discord.app_commands.CommandTree(client)
@@ -138,10 +142,7 @@ tree = discord.app_commands.CommandTree(client)
 async def on_ready():
     print(f'Logged in as {client.user.name} ({client.user.id})')
     await tree.sync()
-    while True:
-        await client.check_images()
-        await client.update_status()
-        await asyncio.sleep(interval_min * 60)
+    client._loop.start()
 
 
 @tree.command(name='ping')
@@ -199,6 +200,5 @@ async def _toggle(interaction, camera_name: str):
         await interaction.response.send_message(embed=embed)
     save_blacklist()
     await client.update_status()
-
 
 client.run(token)
