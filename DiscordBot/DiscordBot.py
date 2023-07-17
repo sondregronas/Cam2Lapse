@@ -77,13 +77,11 @@ class Cam2LapseBot(discord.Client):
     async def check_images(self):
         """Check the root directory for last modified date of .webp images."""
         for file in Path('img').glob('*.webp'):
-            if file.name in blacklist:
-                if file.name in status:
-                    del status[file.name]
-                continue
-
             if file.name not in status:
                 status[file.name] = 0
+
+            if file.name in blacklist:
+                continue
 
             time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
 
@@ -101,8 +99,6 @@ class Cam2LapseBot(discord.Client):
         """Returns a dictionary of camera names and their 'last modified' time."""
         last_seen = {}
         for file in Path('img').glob('*.webp'):
-            if file.name in blacklist:
-                continue
             time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
             if time_elapsed.seconds < 120:
                 last_seen[file.name] = 'pushed just now'
@@ -171,7 +167,7 @@ async def _status(interaction):
     last_seen = await client.get_status()
     embed = discord.Embed(title='Camera feed status', color=0x00ff00)
     for camera_name, last_seen_text in last_seen.items():
-        if camera_name.split('.webp')[0] in blacklist:
+        if camera_name in blacklist:
             embed.add_field(name=f'~~{camera_name.split(".webp")[0]}~~', value=f'~~{last_seen_text}~~ **(blacklisted)**', inline=False)
             continue
         embed.add_field(name=camera_name.split('.webp')[0], value=last_seen_text, inline=False)
@@ -188,6 +184,7 @@ async def _status(interaction):
 @tree.command(name='toggle')
 async def _toggle(interaction, camera_name: str):
     """Toggle monitoring on or off for the given camera"""
+    camera_name = f'{camera_name}.webp'
     if camera_name in blacklist:
         blacklist.remove(camera_name)
         embed = discord.Embed(title='Camera feed status', color=0x00ff00)
