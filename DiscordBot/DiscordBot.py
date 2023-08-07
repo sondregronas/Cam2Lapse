@@ -110,11 +110,10 @@ class Cam2LapseBot(discord.Client):
         """Send a warning to all connected channels."""
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
-            title = f'Warning: Camera feed "{camera_name}" has not sent an update in a while.'
-            text = f'This is warning #{status[camera_name]}.'
+            title = 'Warning'
+            text = f'Camera feed \'{camera_name}\' has not sent an update in a while.'
             embed = discord.Embed(title=title, description=text, color=0xffa000)
             await channel.send(embed=embed)
-            await channel.send(f'>  [{status[camera_name]} warnings]')
 
     async def send_error(self, camera_name: str):
         """Send an error to all connected channels."""
