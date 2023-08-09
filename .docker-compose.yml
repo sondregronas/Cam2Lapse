@@ -1,0 +1,31 @@
+# NOTE: this only covers the Cam2Lapse file (save / send images)
+# Does NOT include a frontend
+version: '3.7'
+services:
+  camlapse:
+    image: ghcr.io/sondregronas/cam2lapse:latest
+    volumes:
+        - ./images:/app/Cam2Lapse
+    environment:
+      # Camera settings
+      - RTSP_URL=""       # RTSP URL to camera
+      - CAM=""            # Camera name (used in receiver, <fqdn>/<cam>.webp), None = 'latest / 1'
+      - ARCHIVE=""        # "true" or "" - store images in <yyyy-mm-dd> folder
+      - DRAW_TIMESTAMP="" # "true" or "" - draw timestamp on image
+
+      # Frequency of taking images
+      - FREQUENCY_HOUR=0
+      - FREQUENCY_MINUTE=3
+      - FREQUENCY_SECOND=0
+
+      # Send to receiver
+      - SEND=""     # "true" or "" - send images to receiver
+      - TOKEN=""    # token for receiver
+      - URL=""      # URL to receiver (https://<fqdn>)
+
+      # Debug (receiver)
+      - HTTP=""             # "true" or "" - use http instead of https for receiver, debug only
+
+      # Timezone
+      - TZ="Europe/Oslo"    # Timezone
+    restart: unless-stopped

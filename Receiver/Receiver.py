@@ -9,13 +9,16 @@ sort of authentication to this script in the future, like a token or something.
 """
 import os
 import shutil
+
 import flask
 from datetime import datetime
 from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 from werkzeug.middleware.proxy_fix import ProxyFix
+from dotenv import load_dotenv
 
+load_dotenv()
 TOKEN = os.environ.get('TOKEN')
 
 app = flask.Flask(__name__)
@@ -52,7 +55,7 @@ def save_file(image_bytes, name='latest.jpg', directory='1') -> None:
         image = Image.open(Path(f'img/{name}'))
     except UnidentifiedImageError:
         raise UnidentifiedImageError(f'Could not open image {name}')
-    image = image.resize((int(image.width / 2), int(image.height / 2)), Image.ANTIALIAS)
+    image = image.resize((int(image.width / 2), int(image.height / 2)), Image.LANCZOS)
     image.save(Path(f'img/{new_name}'), 'webp', quality=80, method=6)
 
     # Update index.html
@@ -89,6 +92,8 @@ def index(path) -> flask.Response:
 
 
 if __name__ == '__main__':
+    if not TOKEN:
+        raise ValueError('TOKEN environment variable not set.')
     if not os.path.exists('img'):
         os.makedirs('img')
     if not os.path.exists('img/index.html'):

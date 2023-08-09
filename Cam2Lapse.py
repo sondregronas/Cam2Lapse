@@ -7,11 +7,40 @@ Web.py in the same folder is a simple Flask server that serves the latest captur
 Adjust the config.py file to your liking, then run this script.
 """
 import os
-import shutil
 import datetime
+import shutil
 import time
 from pathlib import Path
+
+import requests
+
 from config import *
+import logging
+
+logging.basicConfig(filename='cam2lapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
+log = logging.Logger('cam2lapse')
+log.addHandler(logging.StreamHandler())
+
+def send_to_receiver(filename: Path):
+    body = {'file': open(filename, 'rb')}
+    while True:
+        log.info("Sending latest image to server...")
+        try:
+            req = requests.post(URL, files=body)
+            if req.status_code == 200:
+                break
+            else:
+                log.error('Failed to send latest image to server. Retrying in 5 seconds...')
+        except requests.exceptions.ConnectionError:
+            log.error(f'Connection to server failed. Retrying in 5 seconds...')
+            time.sleep(5)
+            continue
+        except requests.exceptions.RequestException as e:
+            log.error(f'{e}. Retrying in 5 seconds...')
+        time.sleep(5)
+        capture_frame()
+        return
+    log.info(f"Sent latest image to server!")
 
 
 def capture_frame() -> None:
@@ -21,31 +50,33 @@ def capture_frame() -> None:
     timestamp = datetime.datetime.now().strftime("%H'%M'%S %Y-%m-%d")
 
     # Filepath to save the images to
-    filename = Path(f'{IMG_FOLDER}/{date}/{timestamp}.jpg')
     latest = Path(f'{IMG_FOLDER}/latest.jpg')
-
-    # Ensure the folder exists
-    if not os.path.exists(f'{IMG_FOLDER}/{date}'):
-        os.makedirs(f'{IMG_FOLDER}/{date}')
+    filename = Path(f'{IMG_FOLDER}/{date}/{timestamp}.jpg')
 
     # Create the command to take the screenshot
     if DRAW_TIMESTAMP:
         text_ffmpeg = timestamp.replace("'", "\:")
-        command = f'ffmpeg -i {RTSP_URL} -vframes 1 -vf "drawtext=fontfile={FONT}: text=\'{text_ffmpeg}\': {TEXT_STYLE}" "{filename}"'
+        command = f'ffmpeg -y -i {RTSP_URL} -vframes 1 -vf "drawtext=fontfile={FONT}: text=\'{text_ffmpeg}\': {TEXT_STYLE}" "{latest}"'
     else:
-        command = f'ffmpeg -i {RTSP_URL} -vframes 1 "{filename}"'
+        command = f'ffmpeg -y -i {RTSP_URL} -vframes 1 "{latest}"'
 
     # Take the screenshot
-    while os.system(command) != 0:
-        print(f"[{timestamp}] Failed to save image! (Retrying in 5s...)")
-        time.sleep(5)
-    print(f"[{timestamp}] Saved!")
+    log.info("Saving image...")
 
-    # Copy filename as "latest.jpg"
-    try:
-        shutil.copy(filename, latest)
-    except FileNotFoundError:
-        print(f'[{timestamp} ERROR] FFmpeg failed to create an image. Ensure your specified stream is working and that FFmpeg is installed.')
+    while os.system(command) != 0:
+        log.critical("Failed to save image! Is the camera running?")
+        time.sleep(5)
+
+    if ARCHIVE:
+        # Ensure the date folder exists
+        if not os.path.exists(f'{IMG_FOLDER}/{date}'):
+            os.makedirs(f'{IMG_FOLDER}/{date}')
+        shutil.copy(latest, filename)
+
+    log.info("Saved!")
+
+    if SEND:
+        send_to_receiver(latest)
 
 
 def main() -> None:
@@ -55,12 +86,14 @@ def main() -> None:
 
     # Set the frequency of image updates
     frequency = FREQUENCY_HOUR * 3600 + FREQUENCY_MIN * 60 + FREQUENCY_SEC
-    
+
     start = time.time()
     capture_frame()
-    
+
     # Start the image capture loop
     while True:
+        # Wait 10 seconds before checking if it's time to take a screenshot again
+        # (Just to save some CPU cycles)
         time.sleep(10)
         if time.time() - start >= frequency:
             start = time.time()
@@ -68,4 +101,15 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    log.info("Starting Cam2Lapse with the following settings:")
+    log.info(f"RTSP_URL: {RTSP_URL}")
+    log.info(f"CAM: {CAM}")
+    log.info(f"DRAW_TIMESTAMP: {bool(DRAW_TIMESTAMP)}")
+    log.info(f"FREQUENCY_HOUR: {FREQUENCY_HOUR}")
+    log.info(f"FREQUENCY_MIN: {FREQUENCY_MIN}")
+    log.info(f"FREQUENCY_SEC: {FREQUENCY_SEC}")
+    log.info(f"ARCHIVE: {bool(ARCHIVE)}")
+    log.info(f"SEND: {bool(SEND)}")
+    log.info(f"URL: {URL}")
+
     main()
