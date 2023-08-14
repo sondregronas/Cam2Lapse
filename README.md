@@ -32,7 +32,7 @@ export CAM="CAM1"
 export URL="https://<RECEIVER-IP>"
 export TOKEN="1234567890"
 
-docker run \
+docker run -d \
     -e RTSP_URL=$RTSP_URL \
     -e SEND_TO_RECEIVER=$SEND_TO_RECEIVER \
     -e CAM=$CAM \
