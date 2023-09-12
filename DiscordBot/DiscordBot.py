@@ -113,6 +113,7 @@ class Cam2LapseBot(discord.Client):
             title = 'Warning'
             text = f'Camera feed \'{camera_name}\' has not sent an update in a while.'
             embed = discord.Embed(title=title, description=text, color=0xffa000)
+            embed.timestamp = datetime.datetime.now()
             await channel.send(embed=embed)
 
     async def send_error(self, camera_name: str):
@@ -122,6 +123,7 @@ class Cam2LapseBot(discord.Client):
             title = f'Error: Camera feed "{camera_name}" is not responding.'
             text = f'@everyone plz fix!'
             embed = discord.Embed(title=title, description=text, color=0xff0000)
+            embed.timestamp = datetime.datetime.now()
             await channel.send(embed=embed)
 
     @tasks.loop(seconds=interval_min * 60)
@@ -152,10 +154,12 @@ async def _channel(interaction):
     if interaction.channel_id in channel_ids:
         channel_ids.remove(interaction.channel_id)
         embed = discord.Embed(title='Channel status', description=f'<#{interaction.channel_id}> removed', color=0xffa000)
+        embed.timestamp = datetime.datetime.now()
         await interaction.response.send_message(embed=embed)
     else:
         channel_ids.append(interaction.channel_id)
         embed = discord.Embed(title='Channel status', description=f'<#{interaction.channel_id}> added', color=0x00ff00)
+        embed.timestamp = datetime.datetime.now()
         await interaction.response.send_message(embed=embed)
     save_channel_ids()
 
@@ -177,6 +181,7 @@ async def _status(interaction):
     for channel in channel_ids:
         if interaction.guild.get_channel(channel):
             embed.add_field(name='', value=f'<#{channel}>', inline=False)
+    embed.timestamp = datetime.datetime.now()
     await interaction.response.send_message(embed=embed)
 
 
@@ -188,11 +193,13 @@ async def _toggle(interaction, camera_name: str):
         blacklist.remove(camera_name)
         embed = discord.Embed(title='Camera feed status', color=0x00ff00)
         embed.add_field(name=camera_name, value='Monitoring', inline=False)
+        embed.timestamp = datetime.datetime.now()
         await interaction.response.send_message(embed=embed)
     else:
         blacklist.append(camera_name)
         embed = discord.Embed(title='Camera feed status', color=0xffa000)
         embed.add_field(name=camera_name, value='Ignoring', inline=False)
+        embed.timestamp = datetime.datetime.now()
         await interaction.response.send_message(embed=embed)
     save_blacklist()
     await client.update_status()
