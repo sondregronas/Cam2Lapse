@@ -34,7 +34,7 @@ export TOKEN="1234567890"
 
 docker run -d \
     -e RTSP_URL=$RTSP_URL \
-    -e SEND_TO_RECEIVER=$SEND_TO_RECEIVER \
+    -e SEND=$SEND_TO_RECEIVER \
     -e CAM=$CAM \
     -e URL=$URL \
     -e TOKEN=$TOKEN \
