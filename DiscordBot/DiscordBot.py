@@ -21,7 +21,7 @@ token = os.environ.get('DISCORD_TOKEN')
 warn_when = datetime.timedelta(minutes=30)
 error_when = datetime.timedelta(hours=6)
 # How long to wait between checking for new images
-interval_min = 60
+interval_min = 180
 
 # Create the Discord client
 intents = discord.Intents.default()
