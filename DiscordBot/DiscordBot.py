@@ -19,9 +19,9 @@ token = os.environ.get('DISCORD_TOKEN')
 
 # How long to wait before sending a warning or error
 warn_when = datetime.timedelta(minutes=30)
-error_when = datetime.timedelta(hours=6)
+error_when = datetime.timedelta(hours=1)
 # How long to wait between checking for new images
-interval_min = 180
+interval_min = 2
 
 # Create the Discord client
 intents = discord.Intents.default()
@@ -62,6 +62,7 @@ def save_blacklist() -> None:
 channel_ids = load_channel_ids()
 blacklist = load_blacklist()
 status = {}
+error_status = {}
 
 
 class Cam2LapseBot(discord.Client):
@@ -72,25 +73,39 @@ class Cam2LapseBot(discord.Client):
             statustext = f'{len(status)} feed'
         if len(blacklist) > 0:
             statustext += f' ({len(blacklist)} ignored)'
+        erroring_cameras = [camera for camera in error_status if error_status[camera].get('error', False)]
+        if len(erroring_cameras) > 0:
+            statustext += f' ({len(erroring_cameras)} down)'
         await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=statustext))
 
     async def check_images(self):
         """Check the root directory for last modified date of .webp images."""
         for file in Path('img').glob('*.webp'):
+            file_name_no_ext = file.name.split('.webp')[0]
             if file.name not in status:
                 status[file.name] = 0
+                error_status[file_name_no_ext] = {}
 
             if file.name in blacklist:
                 continue
 
             time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
 
+            has_sent_warning = error_status[file_name_no_ext].get('warning', False)
+            has_sent_error = error_status[file_name_no_ext].get('error', False)
+            has_sent_warning_or_error = has_sent_warning or has_sent_error
+
             if time_elapsed > error_when:
-                await self.send_error(file.name.split('.webp')[0])
+                if not has_sent_error:
+                    await self.send_error(file_name_no_ext)
             elif time_elapsed > warn_when:
                 status[file.name] += 1
-                await self.send_warning(file.name.split('.webp')[0])
+                if not has_sent_warning_or_error:
+                    await self.send_warning(file_name_no_ext)
             else:
+                if has_sent_error:
+                    await self.send_okay(file_name_no_ext)
+                error_status[file_name_no_ext] = {}
                 status[file.name] = 0
 
         await self.update_status()
@@ -108,6 +123,7 @@ class Cam2LapseBot(discord.Client):
 
     async def send_warning(self, camera_name: str):
         """Send a warning to all connected channels."""
+        error_status[camera_name]['warning'] = True
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = 'Warning'
@@ -118,11 +134,22 @@ class Cam2LapseBot(discord.Client):
 
     async def send_error(self, camera_name: str):
         """Send an error to all connected channels."""
+        error_status[camera_name]['error'] = True
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = f'Error: Camera feed "{camera_name}" is not responding.'
-            text = f'@everyone plz fix!'
+            text = f'@everyone plz fix! (I will notify you when it\'s back online)'
             embed = discord.Embed(title=title, description=text, color=0xff0000)
+            embed.timestamp = datetime.datetime.now()
+            await channel.send(embed=embed)
+
+    async def send_okay(self, camera_name: str):
+        """Send an okay message to all connected channels."""
+        for channel_id in channel_ids:
+            channel = self.get_channel(channel_id)
+            title = 'Camera restored'
+            text = f'Camera feed "{camera_name}" is back online.'
+            embed = discord.Embed(title=title, description=text, color=0x00ff00)
             embed.timestamp = datetime.datetime.now()
             await channel.send(embed=embed)
 
