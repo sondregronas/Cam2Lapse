@@ -13,7 +13,7 @@ Status: needs work, not ready for public use - but feel free to use it if you wa
 ## Installation
 * Clone the repository
 * `pip install -r requirements.txt`
-* Run both `Cam2Lapse.py` and `Web.py` at the same time (or use the provided start script)
+* Run both `Cam2Lapse.py` and `Web.py` at the same time (or use the provided start script
 
 ## Configuration
 The configuration is done in the `config.py` file. It's important that you update the `RTSP_URL` variable with the URL of your camera stream. Use environment variables to override the values in `config.py`.
@@ -24,6 +24,7 @@ Using Receiver.py you can also get a frontend to view the latest image + extra a
 * Run `Receiver.py` on the receiver machine
 
 On the sender machines (where the cameras are connected):
+
 ```sh
 # NOTE: CAM set to '' will result in "latest" being used, saves in folder "1" in the receiver
 export RTSP_URL="rtsp://<CAMERA-IP>"
@@ -41,3 +42,5 @@ docker run -d \
     --restart unless-stopped \
     ghcr.io/sondregronas/cam2lapse:latest
 ```
+
+Alt: `curl -fsSL https://raw.githubusercontent.com/sondregronas/Cam2Lapse/main/setup-client.sh | sh`
