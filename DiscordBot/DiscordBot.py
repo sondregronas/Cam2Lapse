@@ -80,7 +80,7 @@ class Cam2LapseBot(discord.Client):
 
     async def check_images(self):
         """Check the root directory for last modified date of .webp images."""
-        for file in Path('img').glob('*.webp'):
+        for file in self.get_all_webp_in_img():
             file_name_no_ext = file.name.split('.webp')[0]
             if file.name not in status:
                 status[file.name] = 0
@@ -110,10 +110,23 @@ class Cam2LapseBot(discord.Client):
 
         await self.update_status()
 
+    def get_all_webp_in_img(self):
+        if not any([file.is_file() for file in Path('img').iterdir()]):
+            return self.get_all_webp_in_img_subfolders()
+        return [file for file in Path('img').glob('*.webp')]
+
+    @staticmethod
+    def get_all_webp_in_img_subfolders():
+        webp_files = []
+        for folder in Path('img').iterdir():
+            if folder.is_dir():
+                for file in folder.glob('*.webp'):
+                    webp_files.append(file)
+        return webp_files
+
     async def get_status(self):
         """Returns a dictionary of camera names and their 'last modified' time."""
-        last_seen = {}
-        for file in Path('img').glob('*.webp'):
+        for file in self.get_all_webp_in_img():
             time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
             if time_elapsed.seconds < 120:
                 last_seen[file.name] = 'pushed just now'
