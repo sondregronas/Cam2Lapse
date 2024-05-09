@@ -128,11 +128,16 @@ class Cam2LapseBot(discord.Client):
         """Returns a dictionary of camera names and their 'last modified' time."""
         last_seen = {}
         for file in self.get_all_webp_in_img():
-            time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
+            last_modified = datetime.datetime.fromtimestamp(file.stat().st_mtime)
+            time_elapsed = datetime.datetime.now() - last_modified
             if time_elapsed.seconds < 120:
-                last_seen[file.name] = 'pushed just now'
+                last_seen[file.name] = 'Pushed just now'
+            elif time_elapsed.days > 1:
+                last_seen[file.name] = f'Pushed {time_elapsed.days} days, {time_elapsed.seconds // 3600} hours ago'
+            elif time_elapsed.seconds > 7200:
+                last_seen[file.name] = f'Pushed {time_elapsed.seconds // 3600} hours ago'
             else:
-                last_seen[file.name] = f'pushed {time_elapsed.seconds // 60} minutes ago'
+                last_seen[file.name] = f'Pushed {time_elapsed.seconds // 60} minutes ago'
         return last_seen
 
     async def send_warning(self, camera_name: str):
