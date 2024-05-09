@@ -126,6 +126,7 @@ class Cam2LapseBot(discord.Client):
 
     async def get_status(self):
         """Returns a dictionary of camera names and their 'last modified' time."""
+        last_seen = {}
         for file in self.get_all_webp_in_img():
             time_elapsed = datetime.datetime.now() - datetime.datetime.fromtimestamp(file.stat().st_mtime)
             if time_elapsed.seconds < 120:
