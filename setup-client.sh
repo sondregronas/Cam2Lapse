@@ -43,4 +43,4 @@ docker run -d \
     ghcr.io/sondregronas/cam2lapse:latest
 EOF
 
-tailscale up
+tailscale up --accept-dns=false
