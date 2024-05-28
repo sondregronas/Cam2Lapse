@@ -19,8 +19,9 @@ systemctl enable docker
 systemctl start docker
 
 # Install resolvconf and setup Google DNS
-sudo apt-get -y install resolvconf nscd && sudo resolvconf -u
+sudo apt-get -y install resolvconf nscd
 echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolvconf/resolv.conf.d/head
+sudo resolvconf -u
 
 # Pull Cam2Lapse
 docker pull ghcr.io/sondregronas/cam2lapse:latest
