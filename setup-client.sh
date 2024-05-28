@@ -18,6 +18,10 @@ sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plug
 systemctl enable docker
 systemctl start docker
 
+# Install resolvconf and setup Google DNS
+sudo apt-get -y install resolvconf nscd && sudo resolvconf -u
+echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolvconf/resolv.conf.d/head
+
 # Pull Cam2Lapse
 docker pull ghcr.io/sondregronas/cam2lapse:latest
 
