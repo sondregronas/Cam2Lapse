@@ -25,7 +25,7 @@ RUN pip install -r requirements.txt
 # Forward 80 and 443 from the camera to the container to make it easier to access the camera
 RUN echo "export IP=\"\$(echo \${RTSP_URL} | grep -oP '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')\"" > /app/start.sh \
     && echo "rm /etc/nginx/sites-enabled/default" >> /app/start.sh \
-    && echo "echo \"server { listen 80; location / { proxy_pass http://\${IP}:80; } }\" > /etc/nginx/sites-enabled/myproxy.conf" >> /app/start.sh \
+    && echo "echo \"server { listen 80; location / { proxy_pass https://\${IP}:443; } }\" > /etc/nginx/sites-enabled/myproxy.conf" >> /app/start.sh \
     && echo "echo \"server { listen 443; location / { proxy_pass https://\${IP}:443; } }\" >> /etc/nginx/sites-enabled/myproxy.conf" >> /app/start.sh \
     && echo "service nginx restart" >> /app/start.sh \
     && echo "python Cam2Lapse.py" >> /app/start.sh
