@@ -45,6 +45,9 @@ docker run -d \
     -e URL=$URL \
     -e TOKEN=$TOKEN \
     --restart unless-stopped \
+    --name cam2lapse \
+    -p 80:80 \
+    -p 443:443 \
     ghcr.io/sondregronas/cam2lapse:latest
 EOF
 
