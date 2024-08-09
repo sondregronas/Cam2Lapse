@@ -218,9 +218,9 @@ class Cam2LapseBot(discord.Client):
 
     async def send_warning(self, camera_name: str):
         """Send a warning to all connected channels."""
+        error_status[camera_name]['warning'] = True
         if start_time > datetime.datetime.now() - datetime.timedelta(minutes=5):
             return
-        error_status[camera_name]['warning'] = True
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = 'Warning'
@@ -231,9 +231,9 @@ class Cam2LapseBot(discord.Client):
 
     async def send_error(self, camera_name: str):
         """Send an error to all connected channels."""
+        error_status[camera_name]['error'] = True
         if start_time > datetime.datetime.now() - datetime.timedelta(minutes=5):
             return
-        error_status[camera_name]['error'] = True
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = f'Error: Camera feed "{get_alias(camera_name)}" is not responding.'
