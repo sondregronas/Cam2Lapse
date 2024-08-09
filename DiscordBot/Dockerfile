@@ -8,8 +8,6 @@ ENV SMTP_PORT="587"
 ENV SMTP_USERNAME=""
 ENV SMTP_PASSWORD=""
 ENV SMTP_FROM=""
-# Comma separated
-ENV SMTP_TO=""
 # Name=Alias,Name2=Alias2
 ENV ALIASES=""
 ENV TZ=Europe/Oslo
