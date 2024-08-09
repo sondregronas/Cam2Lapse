@@ -175,11 +175,11 @@ class Cam2LapseBot(discord.Client):
 
     async def get_status(self):
         """Returns a dictionary of camera names and their 'last modified' time."""
-        last_seen = {}
+        last_seen = dict()
         for file in self.get_all_webp_in_img():
             last_modified = datetime.datetime.fromtimestamp(file.stat().st_mtime)
             time_elapsed = datetime.datetime.now() - last_modified
-            name = get_alias(file.name)
+            name = f'{get_alias(file.name)} {file.name}'
             if time_elapsed.seconds < 120:
                 last_seen[name] = 'Pushed just now'
             elif time_elapsed.days > 1:
@@ -300,13 +300,15 @@ async def _status(interaction):
     last_seen = await client.get_status()
     embed = discord.Embed(title='Camera feed status', color=0x00ff00)
     for camera_name, last_seen_text in last_seen.items():
-        if camera_name in blacklist:
-            embed.add_field(name=f'~~{camera_name.split(".webp")[0]}~~', value=f'~~{last_seen_text}~~ **(blacklisted)**', inline=False)
+        friendly_name = camera_name.split(".webp")[0].strip()
+        filename = ''.join(camera_name.split(".webp")[1:]).strip()
+        if f'{filename}.webp' in blacklist:
+            embed.add_field(name=f'~~{friendly_name}~~', value=f'~~{last_seen_text} `({filename})`~~ **(blacklisted)**', inline=False)
             continue
-        embed.add_field(name=camera_name.split('.webp')[0], value=last_seen_text, inline=False)
+        embed.add_field(name=friendly_name, value=f'{last_seen_text} `({filename})`', inline=False)
     if len(blacklist):
         embed.add_field(value='NOTE: *blacklisted cameras are not monitored*', name='')
-    embed.add_field(value='Use `/toggle <feed>` to toggle monitoring for a feed\nUse `/(un)subscribe <feed> <email>` to toggle \nemail notification for a feed', name='')
+    embed.add_field(value='Use `/toggle <filename>` to toggle monitoring for a feed\nUse `/(un)subscribe <feed> <email>` to toggle \nemail notifications for a feed', name='')
     embed.add_field(name='Subscribed channels', value=f'', inline=False)
     for channel in channel_ids:
         if interaction.guild.get_channel(channel):

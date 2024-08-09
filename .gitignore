@@ -1,6 +1,7 @@
 Cam2Lapse/
 channels.txt
 email_subscribers.txt
+blacklist.txt
 DiscordBot/img/
 
 *~
