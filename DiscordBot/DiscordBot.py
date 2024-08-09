@@ -13,7 +13,10 @@ import datetime
 import discord
 from pathlib import Path
 from discord.ext import tasks
+from dotenv import load_dotenv
+import smtplib
 
+load_dotenv()
 # Load the Discord token from the environment
 token = os.environ.get('DISCORD_TOKEN')
 
@@ -25,6 +28,19 @@ interval_min = 2
 
 # Create the Discord client
 intents = discord.Intents.default()
+
+
+aliases = os.getenv('ALIASES', '').split(',')
+aliases = [alias.split('=') for alias in aliases if alias]
+aliases = {alias[0].strip(): alias[1].strip() for alias in aliases}
+# Append .webp and add as duplicate entry
+for alias in aliases.copy():
+    aliases[f'{alias}.webp'] = f'{aliases[alias]}.webp'
+
+
+def get_alias(camera_name: str) -> str:
+    """Get the alias for a camera name."""
+    return aliases.get(camera_name, camera_name)
 
 
 def load_channel_ids() -> list:
@@ -57,6 +73,14 @@ def save_blacklist() -> None:
     with open('blacklist.txt', 'w+') as f:
         converted = [str(feed) for feed in blacklist]
         f.write('\n'.join(converted) + '\n')
+
+
+SMTP_SERVER = os.getenv('SMTP_SERVER', '')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '465'))
+SMTP_USERNAME = os.getenv('SMTP_USERNAME', '')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')
+SMTP_FROM = os.getenv('SMTP_FROM', '')
+SMTP_TO = os.getenv('SMTP_TO', '').split(',')
 
 
 channel_ids = load_channel_ids()
@@ -130,15 +154,40 @@ class Cam2LapseBot(discord.Client):
         for file in self.get_all_webp_in_img():
             last_modified = datetime.datetime.fromtimestamp(file.stat().st_mtime)
             time_elapsed = datetime.datetime.now() - last_modified
+            name = get_alias(file.name)
             if time_elapsed.seconds < 120:
-                last_seen[file.name] = 'Pushed just now'
+                last_seen[name] = 'Pushed just now'
             elif time_elapsed.days > 1:
-                last_seen[file.name] = f'Pushed {time_elapsed.days} days, {time_elapsed.seconds // 3600} hours ago'
+                last_seen[name] = f'Pushed {time_elapsed.days} days, {time_elapsed.seconds // 3600} hours ago'
             elif time_elapsed.seconds > 7200:
-                last_seen[file.name] = f'Pushed {time_elapsed.seconds // 3600} hours ago'
+                last_seen[name] = f'Pushed {time_elapsed.seconds // 3600} hours ago'
             else:
-                last_seen[file.name] = f'Pushed {time_elapsed.seconds // 60} minutes ago'
+                last_seen[name] = f'Pushed {time_elapsed.seconds // 60} minutes ago'
         return last_seen
+
+    async def send_email(self, camera_name, online: bool):
+        if not SMTP_SERVER:
+            return
+        try:
+            smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
+            for email in SMTP_TO:
+                if online:
+                    message = f'Subject: Cam2Lapse: Camera "{camera_name}" is back online\n\n'
+                else:
+                    message = f'Subject: Cam2Lapse: Camera "{camera_name}" is not responding\n\nYou\'ll be notified when it\'s back online.'
+                smtp.sendmail(SMTP_FROM, email, message)
+            smtp.quit()
+        except Exception:
+            for channel_id in channel_ids:
+                channel = self.get_channel(channel_id)
+                title = 'Error with email notification'
+                text = f'Failed to send out email notification for camera feed "{camera_name}"'
+                embed = discord.Embed(title=title, description=text, color=0xffa000)
+                embed.timestamp = datetime.datetime.now()
+                await channel.send(embed=embed)
 
     async def send_warning(self, camera_name: str):
         """Send a warning to all connected channels."""
@@ -146,7 +195,7 @@ class Cam2LapseBot(discord.Client):
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = 'Warning'
-            text = f'Camera feed \'{camera_name}\' has not sent an update in a while.'
+            text = f'Camera feed \'{get_alias(camera_name)}\' has not sent an update in a while.'
             embed = discord.Embed(title=title, description=text, color=0xffa000)
             embed.timestamp = datetime.datetime.now()
             await channel.send(embed=embed)
@@ -156,21 +205,23 @@ class Cam2LapseBot(discord.Client):
         error_status[camera_name]['error'] = True
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
-            title = f'Error: Camera feed "{camera_name}" is not responding.'
+            title = f'Error: Camera feed "{get_alias(camera_name)}" is not responding.'
             text = f'@everyone plz fix! (I will notify you when it\'s back online)'
             embed = discord.Embed(title=title, description=text, color=0xff0000)
             embed.timestamp = datetime.datetime.now()
             await channel.send(embed=embed)
+            await self.send_email(get_alias(camera_name), False)
 
     async def send_okay(self, camera_name: str):
         """Send an okay message to all connected channels."""
         for channel_id in channel_ids:
             channel = self.get_channel(channel_id)
             title = 'Camera restored'
-            text = f'Camera feed "{camera_name}" is back online.'
+            text = f'Camera feed "{get_alias(camera_name)}" is back online.'
             embed = discord.Embed(title=title, description=text, color=0x00ff00)
             embed.timestamp = datetime.datetime.now()
             await channel.send(embed=embed)
+            await self.send_email(get_alias(camera_name), True)
 
     @tasks.loop(seconds=interval_min * 60)
     async def _loop(self):
