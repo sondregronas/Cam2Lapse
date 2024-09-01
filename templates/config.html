@@ -121,11 +121,9 @@
     }
 
     if ("{{ config.SEND }}" == "True") {
-        console.log("true");
         document.getElementById("SEND").checked = true;
         document.getElementById("activebtn").style.backgroundColor = "green";
     } else {
-        console.log("false");
         document.getElementById("SEND").checked = false;
         document.getElementById("activebtn").style.backgroundColor = "red";
     }

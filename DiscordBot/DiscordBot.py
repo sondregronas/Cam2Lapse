@@ -341,7 +341,7 @@ async def _status(interaction):
     if len(blacklist):
         embed.add_field(value="NOTE: *blacklisted cameras are not monitored*", name="")
     embed.add_field(
-        value="Use `/toggle <filename>` to toggle monitoring for a feed\nUse `/(un)subscribe <feed> <email>` to toggle \nemail notifications for a feed",
+        value="Use `/toggle <filename>` to toggle monitoring for a feed",
         name="",
     )
     embed.add_field(name="Subscribed channels", value="", inline=False)
