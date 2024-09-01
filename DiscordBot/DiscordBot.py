@@ -9,13 +9,14 @@ Required scopes:
 - mention everyone
 """
 
-import os
 import datetime
-import discord
+import os
+import smtplib
 from pathlib import Path
+
+import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
-import smtplib
 
 start_time = datetime.datetime.now()
 
@@ -208,6 +209,8 @@ class Cam2LapseBot(discord.Client):
         return last_seen
 
     async def send_email(self, camera_name, online: bool):
+        global email_subscribers
+        email_subscribers = load_email_subscribers()
         if not SMTP_SERVER:
             return
         if not email_subscribers.get(camera_name):
@@ -410,6 +413,8 @@ async def _toggle(interaction, camera_name: str):
 @tree.command(name="emailstatus")
 async def _emailstatus(interaction):
     """Get the current email subscription status"""
+    global email_subscribers
+    email_subscribers = load_email_subscribers()
     embed = discord.Embed(title="Email subscription status", color=0x00FF00)
     for camera_name, emails in email_subscribers.items():
         embed.add_field(

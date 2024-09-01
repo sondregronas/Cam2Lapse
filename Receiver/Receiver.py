@@ -92,8 +92,12 @@ def index(path) -> flask.Response:
 
 
 @app.route("/email/<camera>/")
-def get_emails(camera):
+@app.route("/email/")
+def get_emails(camera="latest"):
     """Get the emails of the subscribers for the specified camera."""
+    token = flask.request.args.get("token")
+    if not token == TOKEN:
+        return flask.Response(status=401)
     if not os.path.exists("email_subscribers.txt"):
         return {}
     with open("email_subscribers.txt", "r") as f:
@@ -108,7 +112,8 @@ def get_emails(camera):
 
 
 @app.route("/email/<camera>/", methods=["POST"])
-def update_emails(camera):
+@app.route("/email/", methods=["POST"])
+def update_emails(camera="latest"):
     """Update the emails of the subscribers for the specified camera."""
     token = flask.request.args.get("token")
     if not token == TOKEN:
