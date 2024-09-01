@@ -33,7 +33,6 @@ interval_min = 2
 # Create the Discord client
 intents = discord.Intents.default()
 
-
 aliases = os.getenv("ALIASES", "").split(",")
 aliases = [alias.split("=") for alias in aliases if alias]
 aliases = {alias[0].strip(): alias[1].strip() for alias in aliases}
@@ -85,7 +84,6 @@ SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 SMTP_FROM = os.getenv("SMTP_FROM", "")
 SMTP_TO = os.getenv("SMTP_TO", "").split(",")
-
 
 channel_ids = load_channel_ids()
 blacklist = load_blacklist()
@@ -418,7 +416,9 @@ async def _emailstatus(interaction):
     embed = discord.Embed(title="Email subscription status", color=0x00FF00)
     for camera_name, emails in email_subscribers.items():
         embed.add_field(
-            name=get_alias(camera_name), value=", ".join(emails), inline=False
+            name=get_alias(camera_name),
+            value=f"{len(emails)} subscribed emails",
+            inline=False,
         )
     embed.timestamp = datetime.datetime.now()
     await interaction.response.send_message(embed=embed, ephemeral=True)
