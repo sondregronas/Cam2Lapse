@@ -91,6 +91,9 @@ def update_settings():
         abort(400, "Invalid RTSP URL")
     cam_ip = cam_ip.group(1)
 
+    if "@" in cam_ip:
+        cam_ip = f"{cam_ip.split('://')[0]}://{cam_ip.split('@')[1]}"
+
     # Update settings (write a new config_override.py file)
     with open("config_override.py", "w") as f:
         for k, v in cfg.items():
@@ -101,7 +104,7 @@ def update_settings():
         with open("/etc/nginx/sites-enabled/myproxy.conf", "w+") as file:
             # With the variable:
             file.write(f"""\
-            server {{ listen 8080; location / {{ proxy_pass https://{cam_ip}:443; }} }}
+            server {{ listen 443; location / {{ proxy_pass https://{cam_ip}:443; }} }}
             """)
         os.system("service nginx restart")
 
