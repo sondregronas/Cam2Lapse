@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css"
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css"
     >
 
     <style>
@@ -21,9 +21,11 @@
             margin: 4px 2px;
             cursor: pointer;
         }
+
         #SEND[value="true"] + #active {
             background-color: green;
         }
+
         #SEND[value="false"] + #active {
             background-color: red;
         }
@@ -38,14 +40,18 @@
     <p>Visit the configured camera:</p>
     {# go to :8080 on the current window #}
     <a href="" id="frontend_url">
-        <button>Camera frontend</button></a>
-    <a href="#" onclick="restart()"><button>Restart Cam2Lapse (apply changes, remember to save first!!)</button></a>
+        <button>Camera frontend</button>
+    </a>
+    <a href="#" onclick="restart()">
+        <button>Restart Cam2Lapse (apply changes, remember to save first!!)</button>
+    </a>
 </header>
 <main>
     <br>
     <hgroup>
-    <h2>E-post varslinger</h2>
-        <h3>If you want to be notified when the camera goes online or offline, then this is the place to subscribe to it</h3>
+        <h2>E-post varslinger</h2>
+        <h3>If you want to be notified when the camera goes online or offline, then this is the place to subscribe to
+            it</h3>
     </hgroup>
 
     <label for="email">Email subscribers (one per line)</label>
@@ -55,38 +61,38 @@
     <br><br>
     <h2>Config</h2>
     <form method="post" target="/" name="Config Form">
-        <label for="SEND">Send active</label>
-        <input type="checkbox" name="SEND" id="SEND" value={{ config.SEND |lower }}>
+        <label for="SEND" hidden="hidden">Send active</label>
+        <input type="checkbox" name="SEND" id="SEND" hidden="hidden" value={{ config.SEND |lower }}>
 
         <p id="activebtn" onclick="toggleSend()">
-            Stream {{'running' if config.SEND else 'disabled'}} (currently {{ 'on' if config.SEND else 'off' }})
+            Stream {{ 'enabled' if config.SEND else 'disabled' }} (currently {{ 'on' if config.SEND else 'off' }})
         </p>
         <br><br>
 
         <label for="RTSP_URL">RTSP Url</label>
-        <input type="text" name="RTSP_URL" value="{{config.RTSP_URL}}" id="RTSP_URL">
+        <input type="text" name="RTSP_URL" value="{{ config.RTSP_URL }}" id="RTSP_URL">
 
         <label for="CAM">Camera name</label>
-        <input type="text" name="CAM" value="{{config.CAM}}" id="CAM">
+        <input type="text" name="CAM" value="{{ config.CAM }}" id="CAM">
 
         <label for="FREQUENCY_HOUR">Frequency (hour)</label>
-        <input type="number" name="FREQUENCY_HOUR" value="{{config.FREQUENCY_HOUR}}" id="FREQUENCY_HOUR">
+        <input type="number" name="FREQUENCY_HOUR" value="{{ config.FREQUENCY_HOUR }}" id="FREQUENCY_HOUR">
 
         <label for="FREQUENCY_MIN">Frequency (minute)</label>
-        <input type="number" name="FREQUENCY_MIN" value="{{config.FREQUENCY_MIN}}" id="FREQUENCY_MIN">
+        <input type="number" name="FREQUENCY_MIN" value="{{ config.FREQUENCY_MIN }}" id="FREQUENCY_MIN">
 
         <label for="FREQUENCY_SEC">Frequency (second)</label>
-        <input type="number" name="FREQUENCY_SEC" value="{{config.FREQUENCY_SEC}}" id="FREQUENCY_SEC">
+        <input type="number" name="FREQUENCY_SEC" value="{{ config.FREQUENCY_SEC }}" id="FREQUENCY_SEC">
 
         <label for="TOKEN">Cam2Lapse Receiver Token</label>
-        <input type="text" name="TOKEN" value="{{config.TOKEN}}" id="TOKEN">
+        <input type="text" name="TOKEN" value="{{ config.TOKEN }}" id="TOKEN">
 
         <label for="RECEIVER_URL">Cam2Lapse Receiver URL</label>
-        <input type="text" name="RECEIVER_URL" value="{{config.RECEIVER_URL}}" id="RECEIVER_URL">
+        <input type="text" name="RECEIVER_URL" value="{{ config.RECEIVER_URL }}" id="RECEIVER_URL">
 
         <input type="submit" name="update" value="Save config (does not update emails) - remember to restart!!">
     </form>
-    </main>
+</main>
 <footer>
 </footer>
 
@@ -102,7 +108,7 @@
         } else {
             send.checked = true;
             send.value = "true";
-            active.innerText = "Stream running (currently {{ 'on' if config.SEND else 'off' }})";
+            active.innerText = "Stream enabled (currently {{ 'on' if config.SEND else 'off' }})";
             active.style.backgroundColor = "green";
         }
     }
@@ -114,16 +120,15 @@
             .then(data => console.log(data));
     }
 
-
-        if ("{{ config.SEND }}" == "True") {
-            console.log("true");
-            document.getElementById("SEND").checked = true;
-            document.getElementById("activebtn").style.backgroundColor = "green";
-        } else {
-            console.log("false");
-            document.getElementById("SEND").checked = false;
-            document.getElementById("activebtn").style.backgroundColor = "red";
-        }
+    if ("{{ config.SEND }}" == "True") {
+        console.log("true");
+        document.getElementById("SEND").checked = true;
+        document.getElementById("activebtn").style.backgroundColor = "green";
+    } else {
+        console.log("false");
+        document.getElementById("SEND").checked = false;
+        document.getElementById("activebtn").style.backgroundColor = "red";
+    }
 
     function updateEmails() {
         var emails = document.getElementById("email").value;
@@ -144,8 +149,6 @@
     }
 
     document.getElementById("frontend_url").href = window.location.origin + ":443";
-
 </script>
-
 </body>
 </html>
