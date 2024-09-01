@@ -6,23 +6,30 @@ Web.py in the same folder is a simple Flask server that serves the latest captur
 
 Adjust the config.py file to your liking, then run this script.
 """
-import os
+
 import datetime
+import os
 import shutil
 import time
 from pathlib import Path
 
 import requests
 
-from config import *
+if Path("config_override.py").exists():
+    from config_override import *
+else:
+    from config import *
 import logging
 
-logging.basicConfig(filename='cam2lapse.log', level=logging.INFO, format='%(asctime)s %(message)s')
-log = logging.Logger('cam2lapse')
+logging.basicConfig(
+    filename="cam2lapse.log", level=logging.INFO, format="%(asctime)s %(message)s"
+)
+log = logging.Logger("cam2lapse")
 log.addHandler(logging.StreamHandler())
 
+
 def send_to_receiver(filename: Path):
-    body = {'file': open(filename, 'rb')}
+    body = {"file": open(filename, "rb")}
     while True:
         log.info("Sending latest image to server...")
         try:
@@ -30,17 +37,19 @@ def send_to_receiver(filename: Path):
             if req.status_code == 200:
                 break
             else:
-                log.error('Failed to send latest image to server. Retrying in 5 seconds...')
+                log.error(
+                    "Failed to send latest image to server. Retrying in 5 seconds..."
+                )
         except requests.exceptions.ConnectionError:
-            log.error(f'Connection to server failed. Retrying in 5 seconds...')
+            log.error("Connection to server failed. Retrying in 5 seconds...")
             time.sleep(5)
             continue
         except requests.exceptions.RequestException as e:
-            log.error(f'{e}. Retrying in 5 seconds...')
+            log.error(f"{e}. Retrying in 5 seconds...")
         time.sleep(5)
         capture_frame()
         return
-    log.info(f"Sent latest image to server!")
+    log.info("Sent latest image to server!")
 
 
 def capture_frame() -> None:
@@ -50,8 +59,8 @@ def capture_frame() -> None:
     timestamp = datetime.datetime.now().strftime("%H'%M'%S %Y-%m-%d")
 
     # Filepath to save the images to
-    latest = Path(f'{IMG_FOLDER}/latest.jpg')
-    filename = Path(f'{IMG_FOLDER}/{date}/{timestamp}.jpg')
+    latest = Path(f"{IMG_FOLDER}/latest.jpg")
+    filename = Path(f"{IMG_FOLDER}/{date}/{timestamp}.jpg")
 
     # Create the command to take the screenshot
     if DRAW_TIMESTAMP:
@@ -69,8 +78,8 @@ def capture_frame() -> None:
 
     if ARCHIVE:
         # Ensure the date folder exists
-        if not os.path.exists(f'{IMG_FOLDER}/{date}'):
-            os.makedirs(f'{IMG_FOLDER}/{date}')
+        if not os.path.exists(f"{IMG_FOLDER}/{date}"):
+            os.makedirs(f"{IMG_FOLDER}/{date}")
         shutil.copy(latest, filename)
 
     log.info("Saved!")
@@ -112,4 +121,14 @@ if __name__ == "__main__":
     log.info(f"SEND: {bool(SEND)}")
     log.info(f"URL: {URL}")
 
+    from webui import app
+
+    # Start app in a separate thread
+    import threading
+
+    t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 80})
+    t.start()
+    print("Starting Cam2Lapse...")
     main()
+    print("Exiting...")
+    t.join()
