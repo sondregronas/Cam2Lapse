@@ -7,7 +7,7 @@ load_dotenv()
 RTSP_URL = getenv('RTSP_URL')
 CAM = getenv('CAM', '')   # None = latest, else = cam name
 FREQUENCY_HOUR = int(getenv('FREQUENCY_HOUR', 0))
-FREQUENCY_MIN = int(getenv('FREQUENCY_MIN', 3))
+FREQUENCY_MIN = int(getenv('FREQUENCY_MIN', 10))
 FREQUENCY_SEC = int(getenv('FREQUENCY_SEC', 0))
 ARCHIVE = getenv('ARCHIVE', False)
 SEND = getenv('SEND', False)
