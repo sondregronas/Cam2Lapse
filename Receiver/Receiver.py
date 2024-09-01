@@ -131,7 +131,7 @@ def update_emails(camera="latest"):
     with open("email_subscribers.txt", "w+", encoding="utf-8") as f:
         cam_exists = False
         for line in lines:
-            if not line:
+            if not line or ":" not in line:
                 continue
             camera_name, _ = line.split(":")
             if camera_name == camera:
@@ -139,9 +139,9 @@ def update_emails(camera="latest"):
                     f.write(f"{camera}:{','.join(emails)}\n")
                 cam_exists = True
             else:
-                f.write(line)
-        if not cam_exists:
-            f.write(f"{camera}:{','.join(emails)}\n")
+                f.write(f"{line}")
+        if not cam_exists and emails:
+            f.write(f"\n{camera}:{','.join(emails)}")
     return flask.Response(status=200)
 
 
