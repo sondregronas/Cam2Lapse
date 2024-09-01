@@ -100,7 +100,7 @@ def get_emails(camera="latest"):
         return flask.Response(status=401)
     if not os.path.exists("email_subscribers.txt"):
         return {}
-    with open("email_subscribers.txt", "r") as f:
+    with open("email_subscribers.txt", "r", encoding="utf-8") as f:
         subscribers = {}
         for line in f.read().split("\n"):
             if not line:
@@ -124,7 +124,7 @@ def update_emails(camera="latest"):
 
     # Update the email_subscribers.txt file
     if os.path.exists("email_subscribers.txt"):
-        with open("email_subscribers.txt", "r") as f:
+        with open("email_subscribers.txt", "r", encoding="utf-8") as f:
             lines = f.readlines()
     else:
         lines = []

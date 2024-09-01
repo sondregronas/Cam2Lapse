@@ -25,15 +25,16 @@ cfg = {
     "ARCHIVE": config.ARCHIVE,
     "SEND": config.SEND,
     "TOKEN": config.TOKEN,
-    "RECEIVER_URL": "http://localhost:5000"
-    if not hasattr(config, "RECEIVER_URL")
-    else config.RECEIVER_URL,
+    "RECEIVER_URL": "" if not hasattr(config, "RECEIVER_URL") else config.RECEIVER_URL,
     "URL": config.URL,
     "IMG_FOLDER": config.IMG_FOLDER,
     "DRAW_TIMESTAMP": config.DRAW_TIMESTAMP,
     "FONT": config.FONT,
     "TEXT_STYLE": config.TEXT_STYLE,
 }
+
+if cfg.get("URL") and not cfg.get("RECEIVER_URL"):
+    cfg["RECEIVER_URL"] = re.search(r"(https?://.+)/", cfg["URL"]).group(1)
 
 
 def get_emails():
