@@ -36,13 +36,16 @@ cfg = {
 if cfg.get("URL") and not cfg.get("RECEIVER_URL"):
     cfg["RECEIVER_URL"] = re.search(r"(https?://.+)/", cfg["URL"]).group(1)
 
+email_url = f'{cfg["RECEIVER_URL"]}/email/{cfg.get("CAM", "latest")}'
+if not cfg.get("CAM"):
+    email_url += "latest"
+if cfg.get("TOKEN"):
+    email_url += f"?token={cfg['TOKEN']}"
+
 
 def get_emails():
-    url = f'{cfg["RECEIVER_URL"]}/email/{cfg["CAM"]}'
-    if cfg.get("TOKEN"):
-        url += f"?token={cfg['TOKEN']}"
     try:
-        emails = requests.get(url).json().get(cfg["CAM"], [])
+        emails = requests.get(email_url).json().get(cfg["CAM"] or "latest", [])
     except requests.exceptions.RequestException:
         emails = {}
     return emails
@@ -124,11 +127,8 @@ def email():
         if v.strip():
             email_list += [v.strip()]
 
-    url = f'{cfg["RECEIVER_URL"]}/email/{cfg["CAM"]}'
-    if cfg.get("TOKEN"):
-        url += f"?token={cfg['TOKEN']}"
     requests.post(
-        url,
+        email_url,
         json={"emails": email_list},
     )
 
