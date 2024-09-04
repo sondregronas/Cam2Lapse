@@ -58,3 +58,5 @@ docker run -d \
 ```
 
 Alt: `curl -fsSL https://raw.githubusercontent.com/sondregronas/Cam2Lapse/main/setup-client.sh | sh`
+
+Update: `sudo docker pull ghcr.io/sondregronas/cam2lapse:latest && sudo docker stop cam2lapse && sudo docker rm cam2lapse && sudo sh run.sh`
