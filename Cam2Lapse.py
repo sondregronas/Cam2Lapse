@@ -104,7 +104,7 @@ def main() -> None:
         # Wait 10 seconds before checking if it's time to take a screenshot again
         # (Just to save some CPU cycles)
         time.sleep(10)
-        if time.time() - start >= frequency:
+        if time.time() - start >= float(frequency):
             start = time.time()
             capture_frame()
 
