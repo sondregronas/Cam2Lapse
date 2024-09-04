@@ -42,6 +42,9 @@
     <a href="" id="frontend_url">
         <button>Camera frontend</button>
     </a>
+    <a href="" id="router_url">
+        <button>Router</button>
+    </a>
     <a href="#" onclick="restart()">
         <button>Restart Cam2Lapse (apply changes, remember to save first!!)</button>
     </a>
@@ -146,7 +149,8 @@
             });
     }
 
-    document.getElementById("frontend_url").href = window.location.origin + ":443";
+    document.getElementById("frontend_url").href = window.location.origin + ":8080";
+    document.getElementById("router_url").href = window.location.origin + ":8081";
 </script>
 </body>
 </html>

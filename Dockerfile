@@ -36,5 +36,7 @@ COPY config.py .
 
 EXPOSE 80
 EXPOSE 443
+EXPOSE 8080
+EXPOSE 8081
 CMD ["sh", "/app/start.sh"]
 

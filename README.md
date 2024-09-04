@@ -54,9 +54,12 @@ docker run -d \
     --name cam2lapse \
     -p 80:80 \
     -p 443:443 \
+    -p 8080:8080 \
+    -p 8081:8081 \
     ghcr.io/sondregronas/cam2lapse:latest
 ```
 
 Alt: `curl -fsSL https://raw.githubusercontent.com/sondregronas/Cam2Lapse/main/setup-client.sh | sh`
 
-Update: `sudo docker pull ghcr.io/sondregronas/cam2lapse:latest && sudo docker stop cam2lapse && sudo docker rm cam2lapse && sudo sh run.sh`
+Update:
+`sudo docker pull ghcr.io/sondregronas/cam2lapse:latest && sudo docker stop cam2lapse && sudo docker rm cam2lapse && sudo sh run.sh`

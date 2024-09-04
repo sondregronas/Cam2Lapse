@@ -96,6 +96,7 @@ def update_settings():
 
     if "@" in cam_ip:
         cam_ip = f"{cam_ip.split('://')[0]}://{cam_ip.split('@')[1]}"
+    cam_ip = cam_ip.split("://")[1].split(":")[0]
 
     # Update settings (write a new config_override.py file)
     with open("config_override.py", "w") as f:
@@ -103,13 +104,19 @@ def update_settings():
             f.write(f"{k} = {repr(v)}\n")
 
     # Update the camera url in nginx
-    if Path("/etc/nginx/sites-enabled/myproxy.conf").exists():
-        with open("/etc/nginx/sites-enabled/myproxy.conf", "w+") as file:
-            # With the variable:
-            file.write(f"""\
-            server {{ listen 443; location / {{ proxy_pass https://{cam_ip}:443; }} }}
-            """)
-        os.system("service nginx restart")
+    os.system("rm /etc/nginx/sites-enabled/myproxy.conf")
+    with open("/etc/nginx/sites-enabled/myproxy.conf", "w+") as file:
+        file.write(
+            f"server {{ listen 8080; location / {{ proxy_pass https://{cam_ip}:443; }} }}"
+        )
+
+    router_ip = ".".join(cam_ip.split(".")[0:3]) + ".1"
+    os.system("rm /etc/nginx/sites-enabled/router.conf")
+    with open("/etc/nginx/sites-enabled/router.conf", "w+") as file:
+        file.write(
+            f"server {{ listen 8081; location / {{ proxy_pass http://{router_ip}/; proxy_set_header Referer http://{router_ip}/; }} }}"
+        )
+    os.system("service nginx restart")
 
     return render_template("config.html", config=cfg)
 
