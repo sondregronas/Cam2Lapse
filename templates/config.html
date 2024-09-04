@@ -37,6 +37,10 @@
         <h1>Cam2Lapse</h1>
         <h2>A dashboard for the no. 1 timelapse camera solution (present on this network)</h2>
     </hgroup>
+    {% if config.PREVIEW_URL %}
+        <img src="{{ config.PREVIEW_URL }}" alt="Preview image" style="width: 30%;">
+    {% endif %}
+    <br><br>
     <p>Visit the configured camera:</p>
     {# go to :8080 on the current window #}
     <a href="" id="frontend_url">
@@ -92,6 +96,9 @@
 
         <label for="RECEIVER_URL">Cam2Lapse Receiver URL</label>
         <input type="text" name="RECEIVER_URL" value="{{ config.RECEIVER_URL }}" id="RECEIVER_URL">
+
+        <label for="PREVIEW_URL">Cam2Lapse Preview URL (image url)</label>
+        <input type="text" name="PREVIEW_URL" value="{{ config.PREVIEW_URL }}" id="PREVIEW_URL">
 
         <input type="submit" name="update" value="Save config (does not update emails) - remember to restart!!">
     </form>
