@@ -72,9 +72,10 @@ def capture_frame() -> None:
     # Take the screenshot
     log.info("Saving image...")
 
-    while os.system(command) != 0:
+    if os.system(command) != 0:
         log.critical("Failed to save image! Is the camera running?")
         time.sleep(5)
+        return capture_frame()
 
     if ARCHIVE:
         # Ensure the date folder exists
@@ -94,7 +95,9 @@ def main() -> None:
         os.makedirs(IMG_FOLDER)
 
     # Set the frequency of image updates
-    frequency = FREQUENCY_HOUR * 3600 + FREQUENCY_MIN * 60 + FREQUENCY_SEC
+    frequency = (
+        float(FREQUENCY_HOUR) * 3600 + float(FREQUENCY_MIN) * 60 + float(FREQUENCY_SEC)
+    )
 
     start = time.time()
     capture_frame()
@@ -131,4 +134,4 @@ if __name__ == "__main__":
     print("Starting Cam2Lapse...")
     main()
     print("Exiting...")
-    t.join()
+    os._exit(0)  # Ensure the Flask server is killed
