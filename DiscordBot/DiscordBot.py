@@ -121,22 +121,31 @@ email_subscribers = load_email_subscribers()
 class Cam2LapseBot(discord.Client):
     async def update_status(self) -> None:
         """Update the status of the bot."""
-        statustext = f"{len(status)} feeds"
-        if len(status) == 1:
-            statustext = f"{len(status)} feed"
-        if len(blacklist) > 0:
-            statustext += f" ({len(blacklist)} ignored)"
         erroring_cameras = [
             camera
             for camera in error_status
-            if error_status[camera].get("error", False)
+            if error_status[camera].get("error", False) and camera not in blacklist
         ]
-        if len(erroring_cameras) > 0:
-            statustext += f" ({len(erroring_cameras)} down)"
+
+        cameras_up = len(status) - len(erroring_cameras) - len(blacklist)
+
+        plural_healthy = (
+            "camera is healthy" if cameras_up == 1 else "cameras are healthy"
+        )
+        plural_down = (
+            "camera is down" if len(erroring_cameras) == 1 else "cameras are down"
+        )
+
+        if not erroring_cameras:
+            statustext = f"{cameras_up} {plural_healthy}"
+        else:
+            statustext = f"{len(erroring_cameras)} {plural_down}, {cameras_up} healthy"
+
+        if blacklist:
+            statustext += f" ({len(blacklist)} ignored)"
+
         await client.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.watching, name=statustext
-            )
+            activity=discord.CustomActivity(name=statustext, emoji="📷"),
         )
 
     async def check_images(self):
