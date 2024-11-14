@@ -124,7 +124,8 @@ class Cam2LapseBot(discord.Client):
         erroring_cameras = [
             camera
             for camera in error_status
-            if error_status[camera].get("error", False) and camera not in blacklist
+            if error_status[camera].get("error", False)
+            and get_alias(camera) not in blacklist
         ]
 
         cameras_up = len(status) - len(erroring_cameras) - len(blacklist)
